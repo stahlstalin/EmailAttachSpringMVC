@@ -8,4 +8,6 @@ package com.apple.ist.poc.constant;
 public interface ApplicationConstant {
 
 	public static final String  SEND_MAIL_SERVICE = "/sendEmail.do";
+	
+	public static final String  MAIL_CONTENT_TYPE_EXCEL = "application/vnd.ms-excel";
 }

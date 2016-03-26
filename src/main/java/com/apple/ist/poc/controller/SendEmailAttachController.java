@@ -164,18 +164,18 @@ public class SendEmailAttachController {
 							}
 							return is;
 						}
-					},"application/vnd.ms-excel");
+					},ApplicationConstant.MAIL_CONTENT_TYPE_EXCEL);
 					
 //					Thousand ways of Failure #Failed:1 (NOT RECOMMENDED)
 					messageHelper.addAttachment("poi-test2.xls", new File("/Users/stalinpratap.s/Downloads/EmailAttachSpringMVC/poi-test.xls"));
 					
 //					Taste of Successs #Success:1 - @see https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/core/io/InputStreamSource.html
 					ByteArrayResource resource = getExcelBytes();
-					messageHelper.addAttachment("poi-test3.xls", resource,"application/vnd.ms-excel");
+					messageHelper.addAttachment("poi-test3.xls", resource,ApplicationConstant.MAIL_CONTENT_TYPE_EXCEL);
 					
 //					Thousand ways of Failure #Failed:2 
 					ByteArrayResource resource2 = getExcelBytes2();
-					messageHelper.addAttachment("poi-test4.xls", resource2,"application/vnd.ms-excel");
+					messageHelper.addAttachment("poi-test4.xls", resource2,ApplicationConstant.MAIL_CONTENT_TYPE_EXCEL);
 					
 					messageHelper.addAttachment("poi-test5.xls", new InputStreamSource() {
 						
@@ -183,7 +183,7 @@ public class SendEmailAttachController {
 						public InputStream getInputStream() throws IOException {
 							return getExcelBytes().getInputStream();
 						}
-					},"application/vnd.ms-excel");
+					},ApplicationConstant.MAIL_CONTENT_TYPE_EXCEL);
 
 				}
 			}
