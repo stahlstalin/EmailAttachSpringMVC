@@ -38,6 +38,7 @@ The entire project is for educational purpose. One is free to make quality chang
 ---	
 ##Motivation##
 As part of a recent project requirement, a mailing action to occur where the filtered contents of the grid from dashboard to be sent as an attachment. The excel should be generated on the fly with the json content. The excel should not be downloaded in client file system prior to the mail send. This means browsing for the excel file to send the mail is not allowed because of infosec issue.
+
 ---
 ##Technology Stack##
 - Spring MVC 4.2.1.RELEASE
@@ -49,6 +50,7 @@ As part of a recent project requirement, a mailing action to occur where the fil
 * Java 1.7
 * Maven 3.3.3
 * Tomcat 8
+
 ---
 ##Installation##
 https://github.com/stahlstalin/EmailAttachSpringMVC.git
@@ -58,4 +60,5 @@ cd EmailAttachSpringMVC
 mvn clean install
 
 Deploy the war file in the web container. (Tested in Tomcat)
+
 ---
