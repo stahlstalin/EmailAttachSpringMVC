@@ -1,4 +1,4 @@
-# EmailAttachSpringMVC
+# EmailAttachSpringMVC #
 ***
 ##Synopsis##
 The main intention of the project is to generate excel file and send it as an attachment in a mail. 
