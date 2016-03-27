@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
+import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpServletRequest;
 
@@ -87,7 +88,7 @@ public class SendEmailAttachController {
 		class MimeMessagePrep implements MimeMessagePreparator {
 			
 			@Override
-			public void prepare(MimeMessage mimeMessage) throws Exception {
+			public void prepare(MimeMessage mimeMessage) throws MessagingException, IOException {
 				/**
 				 * @see org.springframework.mail.javamail.MimeMessageHelper
 				 * @see http://docs.spring.io/autorepo/docs/spring-framework/2.5.x/api/org/springframework/mail/javamail/MimeMessageHelper.html
@@ -102,10 +103,10 @@ public class SendEmailAttachController {
 				
 				String attachName = attachFile.getOriginalFilename();
 				
-				LOG.info(((attachFile != null) && (!attachName.isEmpty()))+" "+attachName);
+				LOG.info((attachFile.isEmpty() && (!attachName.isEmpty()))+" "+attachName);
 				
 				//Condition to check if there is an attachment chosen from UI as CommonsMultipartFile reference
-				if ((attachFile != null) && (!attachName.isEmpty())) {
+				if (attachFile.isEmpty() && (!attachName.isEmpty())) {
 					
 					LOG.info("File Item fieldname: "+attachFile.getFileItem().getFieldName());
 					LOG.info("File Item ContentType: "+attachFile.getFileItem().getContentType());
@@ -119,22 +120,9 @@ public class SendEmailAttachController {
 				} else {
 					//Thousand ways of Failure #Failed:1
 					messageHelper.addAttachment("poi-test.xls", new InputStreamSource() {
-						@SuppressWarnings("resource")
 						@Override
 						public InputStream getInputStream() throws IOException {
-							HSSFWorkbook workbook = new HSSFWorkbook();
-							HSSFSheet sheet = workbook.createSheet("Excel Report");
-							HSSFRow rowhead = sheet.createRow((short)0);
-							rowhead.createCell(0).setCellValue("No.");
-							rowhead.createCell(1).setCellValue("Name");
-							rowhead.createCell(2).setCellValue("Address");
-							rowhead.createCell(3).setCellValue("Email");
-							HSSFRow row1 = sheet.createRow((short)1);
-							row1.createCell(0).setCellValue("1");
-							row1.createCell(1).setCellValue("Stahl Stalin");
-							row1.createCell(2).setCellValue("India");
-							row1.createCell(3).setCellValue("stahl.stalin@gmail.com");
-							
+							HSSFWorkbook workbook = createSampleExcelSheet();
 							ByteArrayOutputStream bos = new ByteArrayOutputStream();
 							try {
 							    workbook.write(bos);
@@ -142,48 +130,33 @@ public class SendEmailAttachController {
 							    bos.close();
 							}
 							byte[] content = bos.toByteArray();
-//							byte[] content = workbook.getBytes(); //Invoking HSSFWorkbook.getBytes() does not return all of the data necessary to re- construct a complete Excel file.
 							int size = content.length;
-							InputStream is = null;
 							byte[] b = new byte[size];
-							try {
-								is = new ByteArrayInputStream(content);
-								is.read(b);
-								LOG.info("Data Recovered: "+new String(b));
-								LOG.info(is.available()+" InputStream toString"+is.toString());
-							} catch (IOException e) {
-								LOG.error(e.getMessage());
-							} finally {
-								try{
-									if(is != null) {
-										is.close();
-									}
-								} catch (IOException ex){
-									LOG.error(ex.getMessage());
-								}
+							try(InputStream is = new ByteArrayInputStream(content);) {
+								int readBytes = is.read(b);
+								LOG.info("Reads some number of bytes from the input stream and stores them into the buffer array b: "+readBytes);
+								return is;
 							}
-							return is;
 						}
-					},ApplicationConstant.MAIL_CONTENT_TYPE_EXCEL);
+					}, ApplicationConstant.MAIL_CONTENT_TYPE_EXCEL);
 					
 //					Thousand ways of Failure #Failed:1 (NOT RECOMMENDED)
 					messageHelper.addAttachment("poi-test2.xls", new File("/Users/stalinpratap.s/Downloads/EmailAttachSpringMVC/poi-test.xls"));
 					
 //					Taste of Successs #Success:1 - @see https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/core/io/InputStreamSource.html
 					ByteArrayResource resource = getExcelBytes();
-					messageHelper.addAttachment("poi-test3.xls", resource,ApplicationConstant.MAIL_CONTENT_TYPE_EXCEL);
+					messageHelper.addAttachment("poi-test3.xls", resource, ApplicationConstant.MAIL_CONTENT_TYPE_EXCEL);
 					
 //					Thousand ways of Failure #Failed:2 
 					ByteArrayResource resource2 = getExcelBytes2();
-					messageHelper.addAttachment("poi-test4.xls", resource2,ApplicationConstant.MAIL_CONTENT_TYPE_EXCEL);
+					messageHelper.addAttachment("poi-test4.xls", resource2, ApplicationConstant.MAIL_CONTENT_TYPE_EXCEL);
 					
 					messageHelper.addAttachment("poi-test5.xls", new InputStreamSource() {
-						
 						@Override
 						public InputStream getInputStream() throws IOException {
 							return getExcelBytes().getInputStream();
 						}
-					},ApplicationConstant.MAIL_CONTENT_TYPE_EXCEL);
+					}, ApplicationConstant.MAIL_CONTENT_TYPE_EXCEL);
 
 				}
 			}
@@ -198,52 +171,56 @@ public class SendEmailAttachController {
 	}
 	
 	/**
-	 * This method creates a sample excel sheet using @see org.apache.poi.hssf.usermodel.HSSFWorkbook
-	 * INFO:: This will successfully attach the excel sheet in the mail
-	 * @return java.io.ByteArrayResource
+	 * This method creates a sample @see org.apache.poi.hssf.usermodel.HSSFWorkbook instance.
+	 * @return HSSFWorkbook
 	 */
-	@SuppressWarnings("resource")
-	private ByteArrayResource getExcelBytes() {
-
+	private HSSFWorkbook createSampleExcelSheet() {
 		HSSFWorkbook workbook = new HSSFWorkbook();
 		HSSFSheet sheet = workbook.createSheet("Excel Report");
+		
 		HSSFRow rowhead = sheet.createRow((short)0);
 		rowhead.createCell(0).setCellValue("No.");
 		rowhead.createCell(1).setCellValue("Name");
 		rowhead.createCell(2).setCellValue("Address");
 		rowhead.createCell(3).setCellValue("Email");
+		
 		HSSFRow row1 = sheet.createRow((short)1);
 		row1.createCell(0).setCellValue("1");
 		row1.createCell(1).setCellValue("Stahl Stalin");
 		row1.createCell(2).setCellValue("India");
 		row1.createCell(3).setCellValue("stahl.stalin@gmail.com");
+		
 		HSSFRow row2 = sheet.createRow((short)2);
 		row2.createCell(0).setCellValue("2");
 		row2.createCell(1).setCellValue("Saubhagya Dey");
 		row2.createCell(2).setCellValue("USA");
 		row2.createCell(3).setCellValue("saubhagya.dey@gmail.com");
+		
 		HSSFRow row3 = sheet.createRow((short)3);
 		row3.createCell(0).setCellValue("3");
 		row3.createCell(1).setCellValue("Omkar Lenka");
 		row3.createCell(2).setCellValue("India");
 		row3.createCell(3).setCellValue("omkar.lenka@gmail.com");
 		
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		try {
-		    workbook.write(bos);
-		} catch (IOException ex) {
-			LOG.error(ex.getMessage());
-		} finally {
-		    try {
-				bos.close();
-			} catch (IOException ex) {
-				LOG.error(ex.getMessage());
-			}
-		}
-		byte[] content = bos.toByteArray();
-//		byte[] content = workbook.getBytes(); //Invoking HSSFWorkbook.getBytes() does not return all of the data necessary to re- construct a complete Excel file.
-		return new ByteArrayResource(content);
+		return workbook;
+	}
 	
+	/**
+	 * This method creates a sample excel sheet using @see org.apache.poi.hssf.usermodel.HSSFWorkbook
+	 * INFO:: This will successfully attach the excel sheet in the mail
+	 * @return java.io.ByteArrayResource
+	 * @throws IOException 
+	 */
+	private ByteArrayResource getExcelBytes() throws IOException {
+		HSSFWorkbook workbook = createSampleExcelSheet();
+		
+		try(ByteArrayOutputStream bos = new ByteArrayOutputStream();) {
+		    workbook.write(bos);
+			byte[] content = bos.toByteArray();
+//			byte[] content = workbook.getBytes(); //Invoking HSSFWorkbook.getBytes() does not return all of the data necessary to re- construct a complete Excel file.
+			
+			return new ByteArrayResource(content);
+		}
 	}
 	
 	/**
@@ -251,25 +228,11 @@ public class SendEmailAttachController {
 	 * INFO:: This will fail to attach the excel sheet
 	 * @return ByteArrayResource
 	 */
-	@SuppressWarnings("resource")
 	private ByteArrayResource getExcelBytes2() {
-
-		HSSFWorkbook workbook = new HSSFWorkbook();
-		HSSFSheet sheet = workbook.createSheet("Excel Report");
-		HSSFRow rowhead = sheet.createRow((short)0);
-		rowhead.createCell(0).setCellValue("No.");
-		rowhead.createCell(1).setCellValue("Name");
-		rowhead.createCell(2).setCellValue("Address");
-		rowhead.createCell(3).setCellValue("Email");
-		HSSFRow row1 = sheet.createRow((short)1);
-		row1.createCell(0).setCellValue("1");
-		row1.createCell(1).setCellValue("Stahl Stalin");
-		row1.createCell(2).setCellValue("India");
-		row1.createCell(3).setCellValue("stahl.stalin@gmail.com");
-		
+		HSSFWorkbook workbook = createSampleExcelSheet();;
 		byte[] content = workbook.getBytes(); 
+		
 		return new ByteArrayResource(content);
-	
 	}
 	
 }
