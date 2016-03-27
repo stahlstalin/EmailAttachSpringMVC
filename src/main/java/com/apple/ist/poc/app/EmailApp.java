@@ -1,10 +1,10 @@
 package com.apple.ist.poc.app;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import org.apache.log4j.Logger;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -20,12 +20,42 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 public class EmailApp {
 	
 	/**
-	 * main method - starting point of application execution
-	 * @param args 
+	 * Logger implementation 
+	 * @see https://logging.apache.org/log4j/2.x/javadoc.html
 	 */
-	@SuppressWarnings("resource")
-	public static void main(String[] args) {
+	private static final Logger LOG = Logger.getLogger(EmailApp.class);
+	
+	/**
+	 * Static inner class to hold the EmailApp instance
+	 * @author stalinpratap.s
+	 *
+	 */
+	private static class EmailAppSingletonHelper {
 		
+		private static final EmailApp INSTANCE = new EmailApp();
+
+		private EmailAppSingletonHelper() {}
+		
+	}
+	
+	/**
+	 * private constructor
+	 */
+	private EmailApp() {}
+	
+	/**
+	 * Bill Pugh Singleton Implementation Design Pattern
+	 * @return
+	 */
+	public static EmailApp getInstance() {
+		return EmailAppSingletonHelper.INSTANCE;
+	}
+
+	/**
+	 * This method creates an HSSFWorkbook instance
+	 * @return
+	 */
+	private HSSFWorkbook createWorkbook() {
 		HSSFWorkbook workbook = new HSSFWorkbook();
 		HSSFSheet sheet = workbook.createSheet("Excel Report");
 		HSSFRow rowhead = sheet.createRow((short)0);
@@ -39,16 +69,22 @@ public class EmailApp {
 		row.createCell(2).setCellValue("India");
 		row.createCell(3).setCellValue("stahl.stalin@gmail.com");
 		
-		try {
-	        FileOutputStream out =  new FileOutputStream(new File("poi-test.xls"));
+		return workbook;
+	}
+	
+	/**
+	 * main method - starting point of application execution
+	 * @param args 
+	 */
+	public static void main(String[] args) {
+		HSSFWorkbook workbook = EmailApp.getInstance().createWorkbook();
+		
+		try( FileOutputStream out =  new FileOutputStream(new File("poi-test.xls"));) {
 	        workbook.write(out);
-	        out.close();
-	        System.out.println("Excel written successfully..");
+	        LOG.info("Excel written successfully..");
 	         
-	    } catch (FileNotFoundException e) {
-	        e.printStackTrace();
-	    } catch (IOException e) {
-	        e.printStackTrace();
+	    } catch (IOException e1 ) {
+	        LOG.error("Exception Occurred: "+e1.getCause(),e1);
 	    }
 
 	}
